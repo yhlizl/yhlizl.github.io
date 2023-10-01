@@ -28,7 +28,7 @@
             var formData = new FormData();
             formData.append('picture', file, file.name);
 
-            axios.post('http://localhost:8080/lottery', formData)
+            axios.post('https://da30-218-161-27-213.ngrok-free.app/lottery', formData)
                 .then(function (response) {
                     console.log(response.data);
                     // 使用本地存儲標記為已經上傳

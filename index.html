@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -61,8 +62,26 @@
             border: 1px solid #ddd;
             border-radius: 5px;
         }
+
+        #resultMessage {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border: 2px solid #4caf50;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #congratulationText {
+            color: #4caf50;
+        }
     </style>
 </head>
+
 <body>
     <h1>羅油膩機台刮刮樂</h1>
     <input type="file" accept="image/*" capture="camera" id="fileInput" required>
@@ -70,18 +89,24 @@
     <button onclick="uploadFile()">送出照片</button>
 
     <div id="numberGrid"></div>
-    <!-- https://github.com/94cstyles/lottery/tree/master -->
+
+    <div id="resultMessage">
+        <h2 id="congratulationText"></h2>
+    </div>
+
     <script src="./dist/card.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         // Mock result for testing, replace with actual result
         var result = undefined;
+        var winningNumbers = undefined; // Define winningNumbers globally
+
         fetchData();
+
         function uploadFile() {
             var fileInput = document.getElementById('fileInput');
             var file = fileInput.files[0];
 
-            // Upload file
             var formData = new FormData();
             formData.append('picture', file, file.name);
 
@@ -91,8 +116,7 @@
                     localStorage.setItem('hasUploaded', 'true');
                     alert('File uploaded successfully');
                     result = response.data.result;
-                    // fetchData();
-                    // Show LotteryCard if result is available
+
                     if (result) {
                         convertTextToImage(result);
                     }
@@ -104,17 +128,14 @@
                 });
         }
 
-        // Function to get data from the backend
         function fetchData() {
             axios.post(' https://d8a6-218-161-27-213.ngrok-free.app/getlottery')
                 .then(function (response) {
                     console.log(response.data);
                     var removedNumbers = response.data.removed;
-                    var winningNumbers = response.data.大獎;
-                    // Update UI with the fetched data
-                    updateNumberGrid(result, removedNumbers, winningNumbers);
-                    // You can use removedNumbers and winningNumbers as needed
+                    winningNumbers = response.data.大獎;
 
+                    updateNumberGrid(result, removedNumbers, winningNumbers);
                 })
                 .catch(function (error) {
                     console.error('Error fetching data: ', error);
@@ -130,13 +151,11 @@
                 gridItem.className = 'gridItem';
                 gridItem.textContent = i;
 
-                // Check if the number is in the removed list
                 if (removedNumbers && removedNumbers.includes(i)) {
                     gridItem.innerHTML = '<span style="text-decoration: line-through;">' + i + '</span>';
                     gridItem.style.backgroundColor = 'gray';
                 }
 
-                // Check if the number is in the winning list
                 if (winningNumbers && winningNumbers.includes(i)) {
                     gridItem.style.backgroundColor = 'gold';
                 }
@@ -145,52 +164,52 @@
             }
         }
 
-       // Function to convert text to image
         function convertTextToImage(text) {
             var canvas = document.createElement('canvas');
             var context = canvas.getContext('2d');
 
-            // Set font size and weight
-            var fontSize = 80; // Adjust the font size as needed
+            var fontSize = 80;
             context.font = 'bold ' + fontSize + 'px Arial';
 
             context.fillStyle = 'blue';
-            // context.textAlign = 'center';
-            // context.textBaseline = 'middle';
-            
-            // Calculate the maximum font size to fit the canvas
-            // while (context.measureText(text).width < canvas.width - 10) {
-            //     fontSize++;
-            //     context.font = 'bold ' + fontSize + 'px Arial';
-            // }
-
-            // canvas.width = context.measureText(text).width + 10; // Add some padding
-            // canvas.height = fontSize + 10; // Add some padding
 
             context.fillText(text, 100, 100);
-
-            // Pass the canvas or canvas.toDataURL() to LotteryCard
-            showLotteryCard(canvas.toDataURL());
+            showLotteryCard(canvas.toDataURL(),text);
         }
 
+        function showResultMessage(message) {
+            var resultMessageDiv = document.getElementById('resultMessage');
+            var congratulationText = document.getElementById('congratulationText');
+            congratulationText.textContent = message;
+            resultMessageDiv.style.display = 'block';
+        }
 
-        // Function to create and show LotteryCard
-        function showLotteryCard(imageURL) {
+        function showLotteryCard(imageURL,text) {
             var lottery = new LotteryCard(document.getElementById('js_lottery'), {
                 cover: "gray"
             });
             lottery.on('start', function () {
-                // Set the image URL as the result
                 lottery.setResult(imageURL);
             });
             lottery.on('end', function () {
                 // Handle end event if needed
+                var isWinningNumber = winningNumbers && winningNumbers.includes(parseInt(text));
+
+                if (isWinningNumber) {
+                    // context.fillText('恭喜中獎', 100, 100);
+                    showResultMessage('恭喜中獎');
+                } else {
+                    // context.fillText('差一點點', 100, 100);
+                    showResultMessage('差一點點');
+                }
             });
             window.lottery = lottery;
         }
     </script>
+
     <div class="m-ui-scratch" id="numberGrid"></div>
     <canvas class="m-ui-scratch" id="js_lottery"></canvas>
     <button onclick="fetchData()">Get Data</button>
 </body>
+
 </html>

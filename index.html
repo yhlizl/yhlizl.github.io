@@ -3,44 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Upload</title>
+    <title>羅油膩機台刮刮樂</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f8f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        input {
+            margin-top: 10px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #numberGrid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .gridItem {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        canvas {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-    <h1>File Upload</h1>
-    <input type="file" id="fileInput" accept="image/*" required>
+    <h1>羅油膩機台刮刮樂</h1>
+    <input type="file" accept="image/*" capture="camera" id="fileInput" required>
     <br>
     <button onclick="uploadFile()">Upload</button>
 
+    <div id="numberGrid"></div>
+
+    <script src="lottery/dist/card.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
+        // Mock result for testing, replace with actual result
+        var result = true;
+        fetchData(result);
         function uploadFile() {
             var fileInput = document.getElementById('fileInput');
             var file = fileInput.files[0];
 
-            // 檢查是否已經上傳過
-            var hasUploaded = localStorage.getItem('hasUploaded');
-            // if (hasUploaded) {
-            //     alert('You have already uploaded a file.');
-            //     return;
-            // }
-
-            // 上傳文件
+            // Upload file
             var formData = new FormData();
             formData.append('picture', file, file.name);
 
             axios.post('https://da30-218-161-27-213.ngrok-free.app/lottery', formData)
                 .then(function (response) {
                     console.log(response.data);
-                    // 使用本地存儲標記為已經上傳
                     localStorage.setItem('hasUploaded', 'true');
                     alert('File uploaded successfully');
+                    result = response.data.result;
+                    fetchData(result);
                 })
                 .catch(function (error) {
                     console.error('Error uploading file: ', error);
-                    // 取得後端傳遞的錯誤信息
                     var errorMessage = error.response ? error.response.data.error : 'Unknown error';
-                    alert('Error uploading file: ' + errorMessage);                });
+                    alert('Error uploading file: ' + errorMessage);
+                });
+        }
+
+        // Function to get data from the backend
+        function fetchData() {
+            axios.get('https://da30-218-161-27-213.ngrok-free.app/lottery')
+                .then(function (response) {
+                    console.log(response.data);
+                    var removedNumbers = response.data.removed;
+                    var winningNumbers = response.data.大獎;
+                    // Update UI with the fetched data
+                    updateNumberGrid(result, removedNumbers, winningNumbers);
+                    // You can use removedNumbers and winningNumbers as needed
+                })
+                .catch(function (error) {
+                    console.error('Error fetching data: ', error);
+                });
+        }
+
+        function updateNumberGrid(result, removedNumbers, winningNumbers) {
+        var numberGrid = document.getElementById('numberGrid');
+        numberGrid.innerHTML = '';
+
+        for (var i = 1; i <= 40; i++) {
+            var gridItem = document.createElement('div');
+            gridItem.className = 'gridItem';
+            gridItem.textContent = i;
+
+            // Check if the number is in the removed list
+            if (removedNumbers && removedNumbers.includes(i)) {
+                gridItem.innerHTML = '<span style="text-decoration: line-through;">' + i + '</span>';
+            }
+
+            // Check if the number is in the winning list
+            if (winningNumbers && winningNumbers.includes(i)) {
+                gridItem.style.backgroundColor = 'gold';
+            }
+
+            numberGrid.appendChild(gridItem);
+        }
+    }
+
+        if (result) {
+            var img = new Image();
+            img.src = 'src/card.png';
+            img.onload = function () {
+                var lottery = new LotteryCard(document.getElementById('js_lottery'), {
+                    cover: "gray"
+                });
+                lottery.on('start', function () {
+                    lottery.setResult(result);
+                });
+                lottery.on('end', function () {
+
+                });
+                window.lottery = lottery;
+            };
         }
     </script>
+    <div class="m-ui-scratch" id="numberGrid"></div>
+    <canvas class="m-ui-scratch" id="js_lottery"></canvas>
+    <button onclick="fetchData()">Get Data</button>
 </body>
 </html>
+

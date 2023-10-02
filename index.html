@@ -102,7 +102,7 @@
 
         // Function to get data from the backend
         function fetchData() {
-            axios.get('https://da30-218-161-27-213.ngrok-free.app/lottery')
+            axios.post('https://da30-218-161-27-213.ngrok-free.app/getlottery')
                 .then(function (response) {
                     console.log(response.data);
                     var removedNumbers = response.data.removed;

@@ -76,7 +76,7 @@
     <script>
         // Mock result for testing, replace with actual result
         var result = true;
-        fetchData(result);
+        fetchData();
         function uploadFile() {
             var fileInput = document.getElementById('fileInput');
             var file = fileInput.files[0];
@@ -91,7 +91,7 @@
                     localStorage.setItem('hasUploaded', 'true');
                     alert('File uploaded successfully');
                     result = response.data.result;
-                    fetchData(result);
+                    fetchData();
                 })
                 .catch(function (error) {
                     console.error('Error uploading file: ', error);
@@ -128,6 +128,7 @@
             // Check if the number is in the removed list
             if (removedNumbers && removedNumbers.includes(i)) {
                 gridItem.innerHTML = '<span style="text-decoration: line-through;">' + i + '</span>';
+                gridItem.style.backgroundColor = 'gray';
             }
 
             // Check if the number is in the winning list
@@ -141,13 +142,13 @@
 
         if (result) {
             var img = new Image();
-            img.src = 'src/card.png';
+            img.src = './src/card.png';
             img.onload = function () {
                 var lottery = new LotteryCard(document.getElementById('js_lottery'), {
                     cover: "gray"
                 });
                 lottery.on('start', function () {
-                    lottery.setResult(result);
+                    lottery.setResult(`"${result}"`);
                 });
                 lottery.on('end', function () {
 

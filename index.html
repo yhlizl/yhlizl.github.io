@@ -65,17 +65,17 @@
 </head>
 <body>
     <h1>羅油膩機台刮刮樂</h1>
-    <!-- <input type="file" accept="image/*" capture="camera" id="fileInput" required>
-    <br> -->
-    <button onclick="uploadFile()">上傳照片</button>
+    <input type="file" accept="image/*" capture="camera" id="fileInput" required>
+    <br>
+    <button onclick="uploadFile()">送出照片</button>
 
     <div id="numberGrid"></div>
-
+    <!-- https://github.com/94cstyles/lottery/tree/master -->
     <script src="lottery/dist/card.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         // Mock result for testing, replace with actual result
-        var result = true;
+        var result = undefined;
         fetchData();
         function uploadFile() {
             var fileInput = document.getElementById('fileInput');
@@ -92,6 +92,10 @@
                     alert('File uploaded successfully');
                     result = response.data.result;
                     fetchData();
+                    // Show LotteryCard if result is available
+                    if (result) {
+                        showLotteryCard();
+                    }
                 })
                 .catch(function (error) {
                     console.error('Error uploading file: ', error);
@@ -110,6 +114,9 @@
                     // Update UI with the fetched data
                     updateNumberGrid(result, removedNumbers, winningNumbers);
                     // You can use removedNumbers and winningNumbers as needed
+                    if (result) {
+                        showLotteryCard();
+                    }
                 })
                 .catch(function (error) {
                     console.error('Error fetching data: ', error);
@@ -139,23 +146,20 @@
             numberGrid.appendChild(gridItem);
         }
     }
-
-        if (result) {
-            var img = new Image();
-            img.src = './src/card.png';
-            img.onload = function () {
-                var lottery = new LotteryCard(document.getElementById('js_lottery'), {
-                    cover: "gray"
-                });
-                lottery.on('start', function () {
-                    lottery.setResult(`"${result}"`);
-                });
-                lottery.on('end', function () {
-
-                });
-                window.lottery = lottery;
-            };
-        }
+        
+        // Function to create and show LotteryCard
+    function showLotteryCard() {
+    var lottery = new LotteryCard(document.getElementById('js_lottery'), {
+        cover: "gray"
+    });
+    lottery.on('start', function () {
+        lottery.setResult(`"${result}"`);
+    });
+    lottery.on('end', function () {
+        // Handle end event if needed
+    });
+    window.lottery = lottery;
+}
     </script>
     <div class="m-ui-scratch" id="numberGrid"></div>
     <canvas class="m-ui-scratch" id="js_lottery"></canvas>

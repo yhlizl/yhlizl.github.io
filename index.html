@@ -136,6 +136,14 @@
                     winningNumbers = response.data.大獎;
 
                     updateNumberGrid(result, removedNumbers, winningNumbers);
+                    // 檢查是否所有中獎號碼都已經被抽取
+                    var allWinningNumbersRemoved = winningNumbers.every(function (number) {
+                        return removedNumbers.includes(number);
+                    });
+
+                    if (allWinningNumbersRemoved) {
+                        alert('抽完了，請聯絡羅油膩');
+                    }
                 })
                 .catch(function (error) {
                     console.error('Error fetching data: ', error);

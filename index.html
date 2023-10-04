@@ -110,7 +110,7 @@
             var formData = new FormData();
             formData.append('picture', file, file.name);
 
-            axios.post(' https://d8a6-218-161-27-213.ngrok-free.app/lottery', formData)
+            axios.post(' https://1c5e-218-161-27-213.ngrok-free.app/lottery', formData)
                 .then(function (response) {
                     console.log(response.data);
                     localStorage.setItem('hasUploaded', 'true');
@@ -129,7 +129,7 @@
         }
 
         function fetchData() {
-            axios.post(' https://d8a6-218-161-27-213.ngrok-free.app/getlottery')
+            axios.post(' https://1c5e-218-161-27-213.ngrok-free.app/getlottery')
                 .then(function (response) {
                     console.log(response.data);
                     var removedNumbers = response.data.removed;

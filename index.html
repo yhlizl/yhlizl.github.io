@@ -112,6 +112,18 @@
             background-color: #45a049;
         }
         
+        .fileInputButton.disabled {
+            opacity: 0.5; /* 降低透明度表示禁用狀態 */
+            cursor: not-allowed; /* 使用不允許的游標 */
+        }
+        .firstStepButton.disabled {
+            opacity: 0.5; /* 降低透明度表示禁用狀態 */
+            cursor: not-allowed; /* 使用不允許的游標 */
+        }
+        .secondStepButton.disabled {
+            opacity: 0.5; /* 降低透明度表示禁用狀態 */
+            cursor: not-allowed; /* 使用不允許的游標 */
+        }
     </style>
 </head>
 
@@ -125,12 +137,9 @@
 <body>
     <h1>羅油膩機台刮刮樂</h1>
     <label for="fileInput" class="fileInputLabel">請三個物品為一張照片拍照上傳：</label>
-    <input type="file" accept="image/*" capture="camera" id="fileInput" required class="fileInput" style="display: none;">
-    <button class="fileInputButton" onclick="document.getElementById('fileInput').click()">第一步-拍照</button>
+    <button class="fileInputButton" id="uploadButton" onclick="handleUpload()">拍照並上傳</button>
     
-    <br>
-    <button onclick="uploadFile()">第二步-拍好後按此送出照片</button>
-    
+    <input type="file" accept="image/*" capture="camera" id="fileInput" required style="display: none;">
     
     <div id="numberGrid"></div>
     
@@ -177,6 +186,17 @@
     var winningNumbers = [];
     fetchData();        
     
+    function handleUpload() {
+        var fileInput = document.getElementById('fileInput');
+        if (fileInput) {
+            fileInput.click();
+        }
+    }
+    
+    document.getElementById('fileInput').addEventListener('change', function () {
+        uploadFile();
+    });
+    
     function uploadFile() {
         var fileInput = document.getElementById('fileInput');
         var file = fileInput.files[0];
@@ -215,6 +235,8 @@
                 return removedNumbers.includes(number);
             });
             updateWinningProbability();
+            
+            
             if (allWinningNumbersRemoved) {
                 alert('抽完了，請聯絡羅油膩');
             }

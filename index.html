@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>羅油膩機台刮刮樂</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-TtX0q4dJgUqzSl5KqY5e5zHqj2JeDbPiE4Fz9q+gLEldbm46LpoZvFuvXWId/31W" crossorigin="anonymous">
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -17,15 +18,15 @@
             justify-content: center;
             height: 100vh;
         }
-
+        
         h1 {
             color: #333;
         }
-
+        
         input {
             margin-top: 10px;
         }
-
+        
         button {
             margin-top: 10px;
             padding: 10px 15px;
@@ -35,18 +36,31 @@
             border-radius: 5px;
             cursor: pointer;
         }
-
+        
         button:hover {
             background-color: #45a049;
         }
-
+        
+        #resetButton {
+            padding: 10px 15px;
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        #resetButton:hover {
+            background-color: #c82333;
+        }
+        
         #numberGrid {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
             gap: 10px;
             margin-top: 20px;
         }
-
+        
         .gridItem {
             width: 30px;
             height: 30px;
@@ -56,13 +70,13 @@
             border: 1px solid #ddd;
             border-radius: 5px;
         }
-
+        
         canvas {
             margin-top: 20px;
             border: 1px solid #ddd;
             border-radius: 5px;
         }
-
+        
         #resultMessage {
             position: fixed;
             bottom: 20px;
@@ -75,7 +89,7 @@
             border-radius: 10px;
             display: none;
         }
-
+        
         #congratulationText {
             color: #4caf50;
         }
@@ -87,112 +101,114 @@
     <input type="file" accept="image/*" capture="camera" id="fileInput" required>
     <br>
     <button onclick="uploadFile()">送出照片</button>
-
+    <!-- Reset Button -->
+    <button id="resetButton" onclick="resetLottery()">重置</button>
+    
     <div id="numberGrid"></div>
-
+    
     <div id="resultMessage">
         <h2 id="congratulationText"></h2>
     </div>
-
+    
     <script src="./dist/card.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         // Mock result for testing, replace with actual result
         var result = undefined;
         var winningNumbers = undefined; // Define winningNumbers globally
-
+        
         fetchData();
-
+        
         function uploadFile() {
             var fileInput = document.getElementById('fileInput');
             var file = fileInput.files[0];
-
+            
             var formData = new FormData();
             formData.append('picture', file, file.name);
-
-            axios.post(' https://1c5e-218-161-27-213.ngrok-free.app/lottery', formData)
-                .then(function (response) {
-                    console.log(response.data);
-                    localStorage.setItem('hasUploaded', 'true');
-                    alert('File uploaded successfully');
-                    result = response.data.result;
-
-                    if (result) {
-                        convertTextToImage(result);
-                    }
-                })
-                .catch(function (error) {
-                    console.error('Error uploading file: ', error);
-                    var errorMessage = error.response ? error.response.data.error : 'Unknown error';
-                    alert('Error uploading file: ' + errorMessage);
-                });
+            
+            axios.post('https://1c5e-218-161-27-213.ngrok-free.app/lottery', formData)
+            .then(function (response) {
+                console.log(response.data);
+                localStorage.setItem('hasUploaded', 'true');
+                alert('圖片上傳成功，請到下方刮獎區開獎!!');
+                result = response.data.result;
+                
+                if (result) {
+                    convertTextToImage(result);
+                }
+            })
+            .catch(function (error) {
+                console.error('Error uploading file: ', error);
+                var errorMessage = error.response ? error.response.data.error : 'Unknown error';
+                alert('Error uploading file: ' + errorMessage);
+            });
         }
-
+        
         function fetchData() {
-            axios.post(' https://1c5e-218-161-27-213.ngrok-free.app/getlottery')
-                .then(function (response) {
-                    console.log(response.data);
-                    var removedNumbers = response.data.removed;
-                    winningNumbers = response.data.大獎;
-
-                    updateNumberGrid(result, removedNumbers, winningNumbers);
-                    // 檢查是否所有中獎號碼都已經被抽取
-                    var allWinningNumbersRemoved = winningNumbers.every(function (number) {
-                        return removedNumbers.includes(number);
-                    });
-
-                    if (allWinningNumbersRemoved) {
-                        alert('抽完了，請聯絡羅油膩');
-                    }
-                })
-                .catch(function (error) {
-                    console.error('Error fetching data: ', error);
+            axios.post('https://1c5e-218-161-27-213.ngrok-free.app/getlottery')
+            .then(function (response) {
+                console.log(response.data);
+                var removedNumbers = response.data.removed;
+                winningNumbers = response.data.大獎;
+                
+                updateNumberGrid(result, removedNumbers, winningNumbers);
+                // 檢查是否所有中獎號碼都已經被抽取
+                var allWinningNumbersRemoved = winningNumbers.every(function (number) {
+                    return removedNumbers.includes(number);
                 });
+                
+                if (allWinningNumbersRemoved) {
+                    alert('抽完了，請聯絡羅油膩');
+                }
+            })
+            .catch(function (error) {
+                console.error('Error fetching data: ', error);
+            });
         }
-
+        
         function updateNumberGrid(result, removedNumbers, winningNumbers) {
             var numberGrid = document.getElementById('numberGrid');
             numberGrid.innerHTML = '';
-
+            
             for (var i = 1; i <= 40; i++) {
                 var gridItem = document.createElement('div');
                 gridItem.className = 'gridItem';
                 gridItem.textContent = i;
-
+                
                 if (removedNumbers && removedNumbers.includes(i)) {
                     gridItem.innerHTML = '<span style="text-decoration: line-through;">' + i + '</span>';
                     gridItem.style.backgroundColor = 'gray';
                 }
-
+                
                 if (winningNumbers && winningNumbers.includes(i)) {
                     gridItem.style.backgroundColor = 'gold';
                 }
-
+                
                 numberGrid.appendChild(gridItem);
             }
         }
-
+        
         function convertTextToImage(text) {
             var canvas = document.createElement('canvas');
             var context = canvas.getContext('2d');
-
+            
             var fontSize = 80;
             context.font = 'bold ' + fontSize + 'px Arial';
-
+            
             context.fillStyle = 'blue';
-
+            
             context.fillText(text, 100, 100);
-            showLotteryCard(canvas.toDataURL(),text);
+            showLotteryCard(canvas.toDataURL(), text);
         }
-
+        
         function showResultMessage(message) {
             var resultMessageDiv = document.getElementById('resultMessage');
             var congratulationText = document.getElementById('congratulationText');
             congratulationText.textContent = message;
             resultMessageDiv.style.display = 'block';
         }
-
-        function showLotteryCard(imageURL,text) {
+        
+        function showLotteryCard(imageURL, text) {
             var lottery = new LotteryCard(document.getElementById('js_lottery'), {
                 cover: "gray"
             });
@@ -202,7 +218,6 @@
             lottery.on('end', function () {
                 // Handle end event if needed
                 var isWinningNumber = winningNumbers && winningNumbers.includes(parseInt(text));
-
                 if (isWinningNumber) {
                     // context.fillText('恭喜中獎', 100, 100);
                     showResultMessage('恭喜中獎');
@@ -213,13 +228,20 @@
             });
             window.lottery = lottery;
         }
+        
+        // Reset function
+        function resetLottery() {
+            alert('重置成功');
+            location.reload(); // 重新整理頁面
+        }
     </script>
-
+    
     <div class="m-ui-scratch" id="numberGrid"></div>
     <canvas class="m-ui-scratch" id="js_lottery"></canvas>
     <div id="resultMessage" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; background-color: #fff; padding: 20px; border: 2px solid #4caf50; border-radius: 10px; display: none;">
         <h2 id="congratulationText" style="color: #4caf50;"></h2>
     </div>
-</body>
-
-</html>
+    
+    <!-- Bootstrap JS and Popper.js (required for Bootstrap's JavaScript) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-eUqfMEqpSiZDrJEz0LkH6+Xfdz/8+UuZ9dKO2rY" crossorigin="anonymous"></script>
+    

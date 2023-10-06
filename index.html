@@ -145,7 +145,7 @@
             .then(function (response) {
                 console.log(response.data);
                 localStorage.setItem('hasUploaded', 'true');
-                alert('圖片上傳成功，請到下方刮獎區開獎!!');
+                alert('圖片上傳成功，請到下方刮獎區開獎!!切勿重新上傳!!');
                 result = response.data.result;
                 
                 if (result) {

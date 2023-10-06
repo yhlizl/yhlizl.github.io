@@ -93,6 +93,25 @@
         #congratulationText {
             color: #4caf50;
         }
+        
+        .fileInputLabel {
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        
+        .fileInputButton {
+            padding: 10px 15px;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .fileInputButton:hover {
+            background-color: #45a049;
+        }
+        
     </style>
 </head>
 
@@ -105,8 +124,10 @@
 
 <body>
     <h1>羅油膩機台刮刮樂</h1>
-    <label for="fileInput">第一步-請拍照片上傳 請三個物品為一張照片拍照上傳：</label>
-    <input type="file" accept="image/*" capture="camera" id="fileInput" required>
+    <label for="fileInput" class="fileInputLabel">請三個物品為一張照片拍照上傳：</label>
+    <input type="file" accept="image/*" capture="camera" id="fileInput" required class="fileInput" style="display: none;">
+    <button class="fileInputButton" onclick="document.getElementById('fileInput').click()">第一步-拍照</button>
+    
     <br>
     <button onclick="uploadFile()">第二步-拍好後按此送出照片</button>
     
@@ -116,193 +137,192 @@
     <!-- <div id="resultMessage">
         <h2 id="congratulationText"></h2>
     </div>
-     -->
-    
-    <script src="./dist/card.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    
-    <!-- 說明中獎機率 -->
-    <div id="probabilityExplanation">
-        <p id="probabilityText"></p>
-    </div>
-    <div class="m-ui-scratch" id="numberGrid"></div>
-    <canvas class="m-ui-scratch" id="js_lottery"></canvas>
-    <div id="resultMessage" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; background-color: #fff; padding: 20px; border: 2px solid #4caf50; border-radius: 10px; display: none;">
-        <h2 id="congratulationText" style="color: #4caf50;"></h2>
-    </div>
+-->
 
-    <!-- 在body結尾處加入以下Modal的HTML -->
-    <div class="modal fade" id="resultModal" tabindex="-1" aria-labelledby="resultModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="resultModalLabel">中獎結果</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p id="resultText"></p>
-                </div>
+<script src="./dist/card.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<!-- 說明中獎機率 -->
+<div id="probabilityExplanation">
+    <p id="probabilityText"></p>
+</div>
+<div class="m-ui-scratch" id="numberGrid"></div>
+<canvas class="m-ui-scratch" id="js_lottery"></canvas>
+<div id="resultMessage" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; background-color: #fff; padding: 20px; border: 2px solid #4caf50; border-radius: 10px; display: none;">
+    <h2 id="congratulationText" style="color: #4caf50;"></h2>
+</div>
+
+<!-- 在body結尾處加入以下Modal的HTML -->
+<div class="modal fade" id="resultModal" tabindex="-1" aria-labelledby="resultModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resultModalLabel">中獎結果</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="resultText"></p>
             </div>
         </div>
     </div>
+</div>
+
+
+
+<script>
+    // Mock result for testing, replace with actual result
+    var result = undefined;
+    // 定義全局變數
+    var removedNumbers = [];
+    var winningNumbers = [];
+    fetchData();        
     
-    
-    
-    <script>
-        // Mock result for testing, replace with actual result
-        var result = undefined;
-        // 定義全局變數
-        var removedNumbers = [];
-        var winningNumbers = [];
-        fetchData();        
+    function uploadFile() {
+        var fileInput = document.getElementById('fileInput');
+        var file = fileInput.files[0];
         
-        function uploadFile() {
-            var fileInput = document.getElementById('fileInput');
-            var file = fileInput.files[0];
-            
-            var formData = new FormData();
-            formData.append('picture', file, file.name);
-            
-            axios.post('https://1c5e-218-161-27-213.ngrok-free.app/lottery', formData)
-            .then(function (response) {
-                console.log(response.data);
-                localStorage.setItem('hasUploaded', 'true');
-                alert('圖片上傳成功，請到下方刮獎區開獎!!切勿重新上傳!!');
-                result = response.data.result;
-                
-                if (result) {
-                    convertTextToImage(result);
-                }
-            })
-            .catch(function (error) {
-                console.error('Error uploading file: ', error);
-                var errorMessage = error.response ? error.response.data.error : 'Unknown error';
-                alert('Error uploading file: ' + errorMessage);
-            });
-        }
+        var formData = new FormData();
+        formData.append('picture', file, file.name);
         
-        function fetchData() {
-            axios.post('https://1c5e-218-161-27-213.ngrok-free.app/getlottery')
-            .then(function (response) {
-                console.log(response.data);
-                removedNumbers = response.data.removed;
-                winningNumbers = response.data.大獎;
-                
-                updateNumberGrid(result, removedNumbers, winningNumbers);
-                // 檢查是否所有中獎號碼都已經被抽取
-                var allWinningNumbersRemoved = winningNumbers.every(function (number) {
-                    return removedNumbers.includes(number);
-                });
-                updateWinningProbability();
-                if (allWinningNumbersRemoved) {
-                    alert('抽完了，請聯絡羅油膩');
-                }
-            })
-            .catch(function (error) {
-                console.error('Error fetching data: ', error);
-            });
-        }
-        
-        function updateNumberGrid(result, removedNumbers, winningNumbers) {
-            var numberGrid = document.getElementById('numberGrid');
-            numberGrid.innerHTML = '';
+        axios.post('https://1c5e-218-161-27-213.ngrok-free.app/lottery', formData)
+        .then(function (response) {
+            console.log(response.data);
+            localStorage.setItem('hasUploaded', 'true');
+            alert('圖片上傳成功，請到下方刮獎區開獎!!切勿重新上傳!!');
+            result = response.data.result;
             
-            for (var i = 1; i <= 40; i++) {
-                var gridItem = document.createElement('div');
-                gridItem.className = 'gridItem';
-                gridItem.textContent = i;
-                
-                if (removedNumbers && removedNumbers.includes(i)) {
-                    gridItem.innerHTML = '<span style="text-decoration: line-through;">' + i + '</span>';
-                    gridItem.style.backgroundColor = 'gray';
-                }
-                
-                if (winningNumbers && winningNumbers.includes(i)) {
-                    gridItem.style.backgroundColor = 'gold';
-                }
-                
-                numberGrid.appendChild(gridItem);
+            if (result) {
+                convertTextToImage(result);
             }
-        }
-        
-        function convertTextToImage(text) {
-            var canvas = document.createElement('canvas');
-            var context = canvas.getContext('2d');
+        })
+        .catch(function (error) {
+            console.error('Error uploading file: ', error);
+            var errorMessage = error.response ? error.response.data.error : 'Unknown error';
+            alert('Error uploading file: ' + errorMessage);
+        });
+    }
+    
+    function fetchData() {
+        axios.post('https://1c5e-218-161-27-213.ngrok-free.app/getlottery')
+        .then(function (response) {
+            console.log(response.data);
+            removedNumbers = response.data.removed;
+            winningNumbers = response.data.大獎;
             
-            var fontSize = 80;
-            context.font = 'bold ' + fontSize + 'px Arial';
-            
-            context.fillStyle = 'blue';
-            
-            context.fillText(text, 100, 100);
-            showLotteryCard(canvas.toDataURL(), text);
-        }
-        
-        function showResultMessage(message) {
-            var resultText = document.getElementById('resultText');
-            resultText.textContent = message;
-            
-            // 顯示中獎Modal
-            var resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
-            resultModal.show();
-        }
-        
-        function showLotteryCard(imageURL, text) {
-            var lottery = new LotteryCard(document.getElementById('js_lottery'), {
-                cover: "gray"
+            updateNumberGrid(result, removedNumbers, winningNumbers);
+            // 檢查是否所有中獎號碼都已經被抽取
+            var allWinningNumbersRemoved = winningNumbers.every(function (number) {
+                return removedNumbers.includes(number);
             });
-            lottery.on('start', function () {
-                lottery.setResult(imageURL);
-            });
-            lottery.on('end', function () {
-                // Handle end event if needed
-                var isWinningNumber = winningNumbers && winningNumbers.includes(parseInt(text));
-                if (isWinningNumber) {
-                    // context.fillText('恭喜中獎', 100, 100);
-                    showResultMessage('恭喜中獎');
-                } else {
-                    // context.fillText('差一點點', 100, 100);
-                    showResultMessage('差一點點');
-                }
-            });
-            window.lottery = lottery;
-        }
+            updateWinningProbability();
+            if (allWinningNumbersRemoved) {
+                alert('抽完了，請聯絡羅油膩');
+            }
+        })
+        .catch(function (error) {
+            console.error('Error fetching data: ', error);
+        });
+    }
+    
+    function updateNumberGrid(result, removedNumbers, winningNumbers) {
+        var numberGrid = document.getElementById('numberGrid');
+        numberGrid.innerHTML = '';
         
-        // Reset function
-        function resetLottery() {
-            alert('重置成功');
-            location.reload(); // 重新整理頁面
-        }
-        
-        // Calculate winning probability function
-        function calculateWinningProbability() {
-            if (removedNumbers && winningNumbers) {
-                var totalNumbers = 40;
-                var remainingNumbers = totalNumbers - removedNumbers.length;
-                var winningNumbersCount = winningNumbers.filter(number => !removedNumbers.includes(number)).length;
-                
-                var probability = (winningNumbersCount / remainingNumbers) * 100;
-                return probability.toFixed(2) + '%';
+        for (var i = 1; i <= 40; i++) {
+            var gridItem = document.createElement('div');
+            gridItem.className = 'gridItem';
+            gridItem.textContent = i;
+            
+            if (removedNumbers && removedNumbers.includes(i)) {
+                gridItem.innerHTML = '<span style="text-decoration: line-through;">' + i + '</span>';
+                gridItem.style.backgroundColor = 'gray';
             }
             
-            return 'N/A';
-        }
-        
-        function updateWinningProbability() {
-            var probabilityText = document.getElementById('probabilityText');
-            
-            if (probabilityText) {  // 檢查對象是否存在
-                probabilityText.textContent = '中獎機率：' + calculateWinningProbability();
+            if (winningNumbers && winningNumbers.includes(i)) {
+                gridItem.style.backgroundColor = 'gold';
             }
+            
+            numberGrid.appendChild(gridItem);
+        }
+    }
+    
+    function convertTextToImage(text) {
+        var canvas = document.createElement('canvas');
+        var context = canvas.getContext('2d');
+        
+        var fontSize = 80;
+        context.font = 'bold ' + fontSize + 'px Arial';
+        
+        context.fillStyle = 'blue';
+        
+        context.fillText(text, 100, 100);
+        showLotteryCard(canvas.toDataURL(), text);
+    }
+    
+    function showResultMessage(message) {
+        var resultText = document.getElementById('resultText');
+        resultText.textContent = message;
+        
+        // 顯示中獎Modal
+        var resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+        resultModal.show();
+    }
+    
+    function showLotteryCard(imageURL, text) {
+        var lottery = new LotteryCard(document.getElementById('js_lottery'), {
+            cover: "gray"
+        });
+        lottery.on('start', function () {
+            lottery.setResult(imageURL);
+        });
+        lottery.on('end', function () {
+            // Handle end event if needed
+            var isWinningNumber = winningNumbers && winningNumbers.includes(parseInt(text));
+            if (isWinningNumber) {
+                // context.fillText('恭喜中獎', 100, 100);
+                showResultMessage('恭喜中獎');
+            } else {
+                // context.fillText('差一點點', 100, 100);
+                showResultMessage('差一點點');
+            }
+        });
+        window.lottery = lottery;
+    }
+    
+    // Reset function
+    function resetLottery() {
+        alert('重置成功');
+        location.reload(); // 重新整理頁面
+    }
+    
+    // Calculate winning probability function
+    function calculateWinningProbability() {
+        if (removedNumbers && winningNumbers) {
+            var totalNumbers = 40;
+            var remainingNumbers = totalNumbers - removedNumbers.length;
+            var winningNumbersCount = winningNumbers.filter(number => !removedNumbers.includes(number)).length;
+            
+            var probability = (winningNumbersCount / remainingNumbers) * 100;
+            return probability.toFixed(2) + '%';
         }
         
-        
-        
-        
-        
-        
-    </script>
+        return 'N/A';
+    }
     
-    <!-- Reset Button -->
-    <button id="resetButton" onclick="resetLottery()">是否要上傳另外三個物品</button>
+    function updateWinningProbability() {
+        var probabilityText = document.getElementById('probabilityText');
+        
+        if (probabilityText) {  // 檢查對象是否存在
+            probabilityText.textContent = '中獎機率：' + calculateWinningProbability();
+        }
+    }
     
+    
+    
+    
+    
+    
+</script>
+
+<!-- Reset Button -->
+<button id="resetButton" onclick="resetLottery()">是否要上傳另外三個物品</button>

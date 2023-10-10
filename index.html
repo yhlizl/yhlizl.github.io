@@ -127,6 +127,42 @@
         fireworksCanvas{
             background:#000;
             }
+
+#loadingModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#loadingModal.show {
+    visibility: visible;
+    opacity: 1;
+}
+
+.spinner {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #3498db;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
     </style>
 </head>
 
@@ -179,6 +215,14 @@
         </div>
     </div>
 </div>
+
+<div id="loadingModal">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+</div>
+
+
+<button id="showNumbersButton" class="btn btn-primary">查看已抽過的號碼</button>
 
 
 
@@ -323,6 +367,10 @@ function (callback) {
         var formData = new FormData();
         formData.append('picture', file, file.name);
         
+         // 顯示 Loading Modal
+        var loadingModal = document.getElementById('loadingModal');
+        loadingModal.classList.add('show');
+
         axios.post('https://1c5e-218-161-27-213.ngrok-free.app/lottery', formData)
         .then(function (response) {
             console.log(response.data);
@@ -338,11 +386,16 @@ function (callback) {
                 uploadButton.style.display = 'none';
             }
             }
+
+            // 關閉 Loading Modal
+            loadingModal.classList.remove('show');
         })
         .catch(function (error) {
             console.error('Error uploading file: ', error);
             var errorMessage = error.response ? error.response.data.error : 'Unknown error';
             alert('Error uploading file: ' + errorMessage);
+            // 關閉 Loading Modal
+            loadingModal.classList.remove('show');
         });
     }
     
@@ -465,9 +518,46 @@ function (callback) {
         }
     }
     
-    
-    
-    
+    document.getElementById('showNumbersButton').addEventListener('click', function () {
+    // 向後端發送請求獲取已抽過的號碼
+    axios.post('https://1c5e-218-161-27-213.ngrok-free.app/getMyLotteryNumbers')
+        .then(data => {
+            // 這裡 data 是從後端返回的數據，可以是已抽過的號碼
+            var modalContent = generateModalContent(data.data);
+            showModal('已抽過的號碼', modalContent);
+        })
+        .catch(error => {
+            console.error('Error fetching data: ', error);
+        });
+});
+
+function generateModalContent(data) {
+    console.log("Data",data)
+    if (data.removed && data.removed.length > 0) {
+        var content = '<ul>';
+        data.removed.forEach(number => {
+            content += '<li>' + number.Num + '</li>' + number.CreatedAt;
+        });
+        content += '</ul>';
+        return content;
+    } else {
+        return '<p>暫無已抽過的號碼</p>';
+    }
+}
+
+function showModal(title, content) {
+    var modal = new bootstrap.Modal(document.getElementById('resultModal'));
+    var modalTitle = document.getElementById('resultModalLabel');
+    var modalBody = document.querySelector('#resultModal .modal-body');
+
+    // 設定 Modal 的標題和內容
+    modalTitle.textContent = title;
+    modalBody.innerHTML = content;
+
+    // 顯示 Modal
+    modal.show();
+}
+
     
     
 </script>

@@ -251,6 +251,8 @@ function (callback) {
      canvas.style.display = 'block'
 
      ctx = canvas.getContext("2d");
+     ctx.imageSmoothingEnabled = true;
+
      resizeCanvas();     
      window.requestAnimationFrame(updateWorld);
 

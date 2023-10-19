@@ -163,6 +163,12 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+.modal-image {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+}
     </style>
 </head>
 
@@ -221,6 +227,21 @@
     <p>Loading...</p>
 </div>
 
+<!-- Modal for image -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="imageModalLabel">中獎號碼圖片</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="imageModalBody">
+          <!-- 這裡會放置圖片 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
 
 <button id="showNumbersButton" class="btn btn-primary">查看你已抽過的號碼</button>
 
@@ -231,7 +252,8 @@
     var result = undefined;
     // 定義全局變數
     var removedNumbers = [];
-    var winningNumbers = [];
+    var winningNumbersList = [];
+    var winningNumbers = {};
     fetchData();        
 
 window.addEventListener("resize", resizeCanvas, false);
@@ -373,7 +395,7 @@ function (callback) {
         var loadingModal = document.getElementById('loadingModal');
         loadingModal.classList.add('show');
 
-        axios.post('https://f6d5-218-161-27-213.ngrok-free.app/lottery', formData)
+        axios.post(' https://f6d5-218-161-27-213.ngrok-free.app/lottery', formData)
         .then(function (response) {
             console.log(response.data);
             localStorage.setItem('hasUploaded', 'true');
@@ -402,15 +424,20 @@ function (callback) {
     }
     
     function fetchData() {
-        axios.post('https://f6d5-218-161-27-213.ngrok-free.app/getlottery')
+        axios.post(' https://f6d5-218-161-27-213.ngrok-free.app/getlottery')
         .then(function (response) {
             console.log(response.data);
             removedNumbers = response.data.removed;
             winningNumbers = response.data.大獎;
+            // 中獎號碼的數字列表
+            winningNumbersList = Object.keys(winningNumbers).map(function (number) {
+                return parseInt(number);
+            });
+
             
-            updateNumberGrid(result, removedNumbers, winningNumbers);
+            updateNumberGrid(result, removedNumbers, winningNumbersList);
             // 檢查是否所有中獎號碼都已經被抽取
-            var allWinningNumbersRemoved = winningNumbers.every(function (number) {
+            var allWinningNumbersRemoved = winningNumbersList.every(function (number) {
                 return removedNumbers.includes(number);
             });
             updateWinningProbability();
@@ -425,7 +452,7 @@ function (callback) {
         });
     }
     
-    function updateNumberGrid(result, removedNumbers, winningNumbers) {
+    function updateNumberGrid(result, removedNumbers, winningNumbersList) {
         var numberGrid = document.getElementById('numberGrid');
         numberGrid.innerHTML = '';
         
@@ -439,7 +466,7 @@ function (callback) {
                 gridItem.style.backgroundColor = 'gray';
             }
             
-            if (winningNumbers && winningNumbers.includes(i)) {
+            if (winningNumbersList && winningNumbersList.includes(i)) {
                 gridItem.style.backgroundColor = 'gold';
             }
             
@@ -478,10 +505,13 @@ function (callback) {
         });
         lottery.on('end', function () {
             // Handle end event if needed
-            var isWinningNumber = winningNumbers && winningNumbers.includes(parseInt(text));
+            var isWinningNumber = winningNumbersList && winningNumbersList.includes(parseInt(text));
             if (isWinningNumber) {
                 // context.fillText('恭喜中獎', 100, 100);
                 onLoad()
+                // 中獎時顯示相應的圖片
+                var imageSrc = getImageSrcByNumber(parseInt(text));
+                showWinningImage(parseInt(text))
                 showResultMessage('恭喜中獎');
             } else {
                 // context.fillText('差一點點', 100, 100);
@@ -500,10 +530,10 @@ function (callback) {
     
     // Calculate winning probability function
     function calculateWinningProbability() {
-        if (removedNumbers && winningNumbers) {
+        if (removedNumbers && winningNumbersList) {
             var totalNumbers = 40;
             var remainingNumbers = totalNumbers - removedNumbers.length;
-            var winningNumbersCount = winningNumbers.filter(number => !removedNumbers.includes(number)).length;
+            var winningNumbersCount = winningNumbersList.filter(number => !removedNumbers.includes(number)).length;
             
             var probability = (winningNumbersCount / remainingNumbers) * 100;
             return probability.toFixed(2) + '%';
@@ -522,7 +552,7 @@ function (callback) {
     
     document.getElementById('showNumbersButton').addEventListener('click', function () {
     // 向後端發送請求獲取已抽過的號碼
-    axios.post('https://f6d5-218-161-27-213.ngrok-free.app/getMyLotteryNumbers')
+    axios.post(' https://f6d5-218-161-27-213.ngrok-free.app/getMyLotteryNumbers')
         .then(data => {
             // 這裡 data 是從後端返回的數據，可以是已抽過的號碼
             var modalContent = generateModalContent(data.data);
@@ -558,6 +588,72 @@ function showModal(title, content) {
 
     // 顯示 Modal
     modal.show();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    var numberGrid = document.getElementById('numberGrid');
+
+    numberGrid.addEventListener('mouseover', function (event) {
+        var target = event.target;
+        if (target.classList.contains('gridItem') && target.style.backgroundColor === 'gold') {
+            var number = parseInt(target.textContent);
+            showWinningImage(number);
+        }
+    });
+
+    numberGrid.addEventListener('mouseout', function () {
+        hideWinningImage();
+    });
+});
+
+function showWinningImage(number) {
+   // 根據中獎號碼顯示相應的圖片
+   var imageSrc = getImageSrcByNumber(number);
+
+   // 找到 modal 的 body
+   var imageModalBody = document.getElementById('imageModalBody');
+
+   // 清空 modal 的內容（避免之前的殘留）
+   imageModalBody.innerHTML = '';
+
+   // 創建一個 img 元素
+   var imageElement = document.createElement('img');
+
+   // 設定 img 的 src 屬性
+   imageElement.src = imageSrc;
+
+   // 添加一個 class
+   imageElement.classList.add('modal-image');
+
+   // 把 img 放進 modal 的 body 內
+   imageModalBody.appendChild(imageElement);
+
+   // 打開 modal
+   var imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+   imageModal.show();
+
+   // 加入滑鼠移開時的事件監聽器
+   imageModalBody.addEventListener('mouseleave', function() {
+       // 關閉 modal
+       imageModal.hide();
+   });
+
+}
+
+function hideWinningImage() {
+    // 在這裡隱藏圖片的顯示，你可以根據具體情況實現
+    // 這裡我先 alert 出來，你可以改成其他方式
+    // alert('隱藏中獎號碼的圖片');
+}
+
+function getImageSrcByNumber(number) {
+    /// 檢查中獎號碼是否存在
+    if (winningNumbers && winningNumbers[number]) {
+        // 從字典中直接獲取圖片 URL
+        var picture = winningNumbers[number];
+        // 返回 data URL，這是顯示圖片的一種方式
+        return 'data:image/png;base64,' + picture;
+    }
 }
 
     

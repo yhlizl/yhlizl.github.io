@@ -392,7 +392,6 @@ function (callback) {
         formData.append('picture', file, file.name);
         
          // 顯示 Loading Modal
-        var loadingModal = document.getElementById('loadingModal');
         loadingModal.classList.add('show');
 
         axios.post(' https://f6d5-218-161-27-213.ngrok-free.app/lottery', formData)
@@ -424,9 +423,12 @@ function (callback) {
     }
     
     function fetchData() {
+        var loadingModal = document.getElementById('loadingModal');
+        loadingModal.classList.add('show');
         axios.post(' https://f6d5-218-161-27-213.ngrok-free.app/getlottery')
         .then(function (response) {
             console.log(response.data);
+            loadingModal.classList.remove('show');
             removedNumbers = response.data.removed;
             winningNumbers = response.data.大獎;
             // 中獎號碼的數字列表

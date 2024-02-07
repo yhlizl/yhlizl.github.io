@@ -394,7 +394,7 @@ function (callback) {
          // 顯示 Loading Modal
         loadingModal.classList.add('show');
 
-        axios.post(' https://11b0-218-161-27-213.ngrok-free.app/lottery', formData)
+        axios.post(' https://8979-218-161-27-213.ngrok-free.app/lottery', formData)
         .then(function (response) {
             console.log(response.data);
             localStorage.setItem('hasUploaded', 'true');
@@ -425,7 +425,7 @@ function (callback) {
     function fetchData() {
         var loadingModal = document.getElementById('loadingModal');
         loadingModal.classList.add('show');
-        axios.post(' https://11b0-218-161-27-213.ngrok-free.app/getlottery')
+        axios.post(' https://8979-218-161-27-213.ngrok-free.app/getlottery')
         .then(function (response) {
             console.log(response.data);
             loadingModal.classList.remove('show');
@@ -554,7 +554,7 @@ function (callback) {
     
     document.getElementById('showNumbersButton').addEventListener('click', function () {
     // 向後端發送請求獲取已抽過的號碼
-    axios.post(' https://11b0-218-161-27-213.ngrok-free.app/getMyLotteryNumbers')
+    axios.post(' https://8979-218-161-27-213.ngrok-free.app/getMyLotteryNumbers')
         .then(data => {
             // 這裡 data 是從後端返回的數據，可以是已抽過的號碼
             var modalContent = generateModalContent(data.data);
